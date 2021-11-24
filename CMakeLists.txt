@@ -11,7 +11,7 @@ add_library(topt INTERFACE topt.h) # interface for header only library
 target_include_directories(topt INTERFACE ${CMAKE_SOURCE_DIR}) # path to folder with src (not the actual source)
 
 add_executable(Asteroids asteroids.cpp)
-target_link_libraries(Asteroids PRIVATE topt SDL2::SDL2 SDL2::SDL2main SDL2::SDL2-static)
+target_link_libraries(Asteroids PRIVATE topt SDL2::SDL2main SDL2::SDL2-static)
 
 add_executable(Raycaster raycaster.cpp)
-target_link_libraries(Raycaster PRIVATE topt SDL2::SDL2 SDL2::SDL2main SDL2::SDL2-static)
+target_link_libraries(Raycaster PRIVATE topt SDL2::SDL2main SDL2::SDL2-static)
