@@ -75,13 +75,13 @@ namespace Topt
         Uint32 m_buttons;
 
     public:
-        bool clicked;
+        bool clicked = false;
         int m_x;
         int m_y;
         void Update()
         {
-            //SDL_PumpEvents(); // make sure we have the latest mouse state.
-            //m_buttons = SDL_GetMouseState(&m_x, &m_y);
+            // SDL_PumpEvents(); // make sure we have the latest mouse state.
+            // m_buttons = SDL_GetMouseState(&m_x, &m_y);
         }
         int GetX() const
         {
@@ -100,6 +100,15 @@ namespace Topt
         bool IsMouseButtonPressed(Uint32 button_mask)
         {
             return (m_buttons & button_mask) == 0 ? false : true;
+        }
+        bool SingleClick()
+        {
+            if (clicked)
+            {
+                clicked = false;
+                return true;
+            }
+            return false;
         }
     };
 
@@ -192,14 +201,17 @@ namespace Topt
                     }
                     if (event.type == SDL_MOUSEBUTTONDOWN)
                     {
+
                         mouse.clicked = true;
                         mouse.m_y = event.button.y;
                         mouse.m_x = event.button.x;
                         break;
                     }
-                    else
+                    else if (event.type == SDL_MOUSEBUTTONUP)
                     {
                         mouse.clicked = false;
+                        mouse.m_y = event.button.y;
+                        mouse.m_x = event.button.x;
                         break;
                     }
                 } // end of message processing
@@ -219,7 +231,7 @@ namespace Topt
 
                 OnUserUpdate(fElapsedTime);
                 keyboard.Update();
-                mouse.Update();
+                // mouse.Update();
 
                 // SDL_UnlockTexture(m_Main_Texture);
 

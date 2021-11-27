@@ -55,23 +55,20 @@ public:
 
     virtual bool OnUserUpdate(float fElapsedTime)
     {
-        if (m_game.state != QUIT_STATE)
-        {
-            // while(GetPollEvent())
-            // if (GetPollEvent() == SDL_MOUSEBUTTONDOWN)
-            //{
-            //     std::cout << "CLICKED (" << mouse.GetX() << ", " << mouse.GetY() << ")\n";
-            //     Click_on_cell(mouse.GetY() / cell_height, mouse.GetX() / cell_width);
-            //     break;
-            // }
+        // while(GetPollEvent())
+        // if (GetPollEvent() == SDL_MOUSEBUTTONDOWN)
+        //{
+        //     std::cout << "CLICKED (" << mouse.GetX() << ", " << mouse.GetY() << ")\n";
+        //     Click_on_cell(mouse.GetY() / cell_height, mouse.GetX() / cell_width);
+        //     break;
+        // }
 
-            if (mouse.IsMouseButtonPressed(SDL_BUTTON_LEFT))
-            {
-                printf("CLICKED\n");
-                Click_on_cell(mouse.GetY() / cell_height, mouse.GetX() / cell_width);
-            }
-            Render_game();
+        if (mouse.SingleClick())
+        {
+            printf("CLICKED\n");
+            Click_on_cell(mouse.GetY() / cell_height, mouse.GetX() / cell_width);
         }
+        Render_game();
         return true;
     }
 
