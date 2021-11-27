@@ -1,10 +1,12 @@
-#include <math.h>
+
 #include <iostream>
-#include <map>
-// #include <stdint.h>
 #include <string.h>
 #include <chrono>
-#include <SDL2/SDL.h>
+#include <math.h>
+#include <map>
+
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_ttf.h"
 
 /*
 class EXAMPLE : public Topt::Rasterizer
@@ -146,6 +148,12 @@ namespace Topt
             m_Window = SDL_CreateWindow("Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
             m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
             m_Main_Texture = SDL_CreateTexture(m_Renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, m_Width / scale_x, m_Height / scale_x);
+
+            if (TTF_Init() == -1)
+            {
+                fprintf(stderr, "TTF_Init Error: %s\n", TTF_GetError());
+                return;
+            }
         }
 
         ~Rasterizer()

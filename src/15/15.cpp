@@ -1,7 +1,8 @@
 
 #include "topt.h"
 
-#include "SDL2/SDL_ttf.h"
+#include <vector>
+
 #include "SDL2/SDL2_gfxPrimitives.h"
 
 #define EMPTY 0
@@ -9,13 +10,17 @@
 #define PLAYER_O 2
 
 #define RUNNING_STATE 0
-#define QUIT_STATE 1
-#define WON_STATE 2
+#define START_TIMER 1
+#define QUIT_STATE 2
+#define RANDOMISE_BOARD 3
+#define WON_STATE 4
+#define DISPLAY_TIME_SCREEN 5
+#define WAIT_FOR_CLICK 6
 
 #define N 4 // number of rows and columns 4x4
 
 // make the screen square
-#define SCREEN_WIDTH 640
+#define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT SCREEN_WIDTH
 
 const int CELL_WIDTH = SCREEN_WIDTH / N;
@@ -35,18 +40,21 @@ private:
     {
         int board[N * N];
         int state;
-        float time;
     } game_t;
+
+    // Handle Timing
+    std::chrono::steady_clock::time_point m_Time_Begin;
+    std::chrono::steady_clock::time_point m_Time_End;
 
     game_t m_game;
 
 public:
     virtual bool OnUserCreate()
     {
-        game_t game = {
+        m_game = {
             .board = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-            .state = WON_STATE, // to trigger the randomizer
-            .time = 0.0f};
+            .state = START_TIMER, // to trigger the randomizer
+        };
 
         return true;
     }
@@ -55,7 +63,7 @@ public:
     {
         if (mouse.SingleClick())
         {
-            Click_on_cell(mouse.GetY() / CELL_HEIGHT, mouse.GetX() / CELL_WIDTH);
+            Click_on_cell(mouse.GetX() / CELL_WIDTH, mouse.GetY() / CELL_HEIGHT);
         }
         Render_game();
         return true;
@@ -83,20 +91,17 @@ private:
 
     void Render_number(int number, int row, int column)
     {
+        // our blank space number
         if (number == 16)
             return;
 
-        // const float center_x = CELL_WIDTH * 0.5 + column * CELL_WIDTH;
-        // const float center_y = CELL_HEIGHT * 0.5 + row * CELL_HEIGHT;
-
         // this opens a font style and sets a size
-        TTF_Font *font = TTF_OpenFont("..\\15\\res\\fonts\\RobotoMono-Bold.ttf", 32);
+        TTF_Font *font = TTF_OpenFont("..\\res\\fonts\\RobotoMono-Bold.ttf", 32);
         if (!font)
         {
             fprintf(stderr, "Error using TTF_OpenFont: %s\n", TTF_GetError());
             return;
         }
-        // TTF_SetFontStyle(font, TTF_STYLE_BOLD);
 
         // as TTF_RenderText_Solid could only be used on
         // SDL_Surface then you have to create the surface first
@@ -108,9 +113,6 @@ private:
             fprintf(stderr, "Error using TTF_RenderText_Blended: %s\n", TTF_GetError());
             return;
         }
-        // SDL_Surface *surfaceMessage = TTF_RenderGlyph_Blended(font, char_number, White);
-        // SDL_Surface *surfaceMessage = TTF_RenderUNICODE_Blended(font, &char_number, White);
-
         // now you can convert it into a texture
         SDL_Texture *Message = SDL_CreateTextureFromSurface(GetRenderer(), surfaceMessage);
 
@@ -123,20 +125,6 @@ private:
         Message_rect.w = surfaceMessage->w;                                             // controls the width of the rect
         Message_rect.h = surfaceMessage->h;                                             // controls the height of the rect
 
-        // SDL_Rect rectToDraw = {Message_rect.x, Message_rect.y, surfaceMessage->w, surfaceMessage->h};
-        //  SDL_RenderDrawRect(renderer, &Message_rect); // draw rectangle with no colour (border only)
-
-        // (0,0) is on the top left of the window/screen,d
-        // think a rect as the text's box,
-        // that way it would be very simple to understand
-
-        // Now since it's a texture, you have to put RenderCopy
-        // in your game loop area, the area where the whole code executes
-
-        // you put the renderer's name first, the Message,
-        // the crop size (you can ignore this if you don't want
-        // to dabble with cropping), and the rect which is the size
-        // and coordinate of your texture
         SDL_RenderCopy(GetRenderer(), Message, NULL, &Message_rect);
 
         // Don't forget to free your surface and texture
@@ -167,11 +155,20 @@ private:
     {
         switch (m_game.state)
         {
+        case RANDOMISE_BOARD:
+            Randomize_board();
+            // break;
+        case START_TIMER:
+            std::cout << "Timer started...\n";
+            m_Time_Begin = std::chrono::steady_clock::now();
+            m_game.state = RUNNING_STATE;
+            //  break;
         case RUNNING_STATE:
             Render_board();
             break;
-        // case WON_STATE:   // display time to solve
-        //     Render_won_screen(renderer, game);
+        case DISPLAY_TIME_SCREEN:
+            Display_game_time();
+            break;
         default:
             break;
         }
@@ -188,7 +185,9 @@ private:
         }
 
         std::cout << "GAME COMPLETE!\n";
-        m_game.state = WON_STATE;
+        m_game.state = DISPLAY_TIME_SCREEN;
+
+        m_Time_End = std::chrono::steady_clock::now();
     }
 
     void Move(int from_x, int from_y, int to_x, int to_y)
@@ -264,7 +263,8 @@ private:
         int x = 3; // starting index for "blank" square
         int y = 3;
 
-        for (int i = 0; i < 100; i++)
+        std::cout << "Starting to randomize the board!\n";
+        for (int i = 0; i < 750; i++)
         {
             x += (rand() % 3) - 1;
             x = x > 3 ? 3 : x;
@@ -280,6 +280,61 @@ private:
         m_game.state = RUNNING_STATE;
     }
 
+    void Display_game_time()
+    {
+        TTF_Font *font = TTF_OpenFont("..\\res\\fonts\\RobotoMono-Bold.ttf", 32);
+        if (!font)
+        {
+            fprintf(stderr, "Error using TTF_OpenFont: %s\n", TTF_GetError());
+            return;
+        }
+
+        // https://www.delftstack.com/howto/cpp/cpp-timing/
+        // divide by 1000 so we can get like 13.37 seconds :)
+        auto end_time = (std::chrono::duration_cast<std::chrono::milliseconds>(m_Time_End - m_Time_Begin).count()) / 1000.0f;
+
+        char char_time[4];
+        sprintf(char_time, "%0.1f", end_time);
+
+        SDL_Surface *surface_time = TTF_RenderText_Blended(font, char_time, TEXT_COLOUR_WHITE);
+        SDL_Surface *surface_letter_s = TTF_RenderText_Blended(font, "s", TEXT_COLOUR_WHITE);
+        if (!surface_time || !surface_letter_s)
+        {
+            fprintf(stderr, "Error using TTF_RenderText_Blended: %s\n", TTF_GetError());
+            return;
+        }
+        // now you can convert it into a texture
+        SDL_Texture *texture_time = SDL_CreateTextureFromSurface(GetRenderer(), surface_time);
+        SDL_Texture *texture_letter_s = SDL_CreateTextureFromSurface(GetRenderer(), surface_letter_s);
+
+        // center text on screen
+        const int x_pos = (SCREEN_WIDTH / 2) - ((surface_time->w + surface_letter_s->w) / 2);
+        const int y_pos = (SCREEN_HEIGHT / 2) - ((surface_time->h) / 2);
+        SDL_Rect time_rect_dest;            // create a rect
+        time_rect_dest.x = x_pos;           // controls the rect's x coordinate
+        time_rect_dest.y = y_pos;           // controls the rect's y coordinte
+        time_rect_dest.w = surface_time->w; // controls the width of the rect
+        time_rect_dest.h = surface_time->h; // controls the height of the rect
+
+        SDL_Rect letter_s_dest = {.x = (time_rect_dest.x + time_rect_dest.w),
+                                  .y = y_pos,
+                                  .w = surface_letter_s->w,
+                                  .h = surface_letter_s->h};
+
+        SDL_RenderCopy(GetRenderer(), texture_time, NULL, &time_rect_dest);
+
+        SDL_RenderCopy(GetRenderer(), texture_letter_s, NULL, &letter_s_dest);
+
+        // Don't forget to free the surface and texture
+        TTF_CloseFont(font);
+        SDL_FreeSurface(surface_time);
+        SDL_DestroyTexture(texture_time);
+
+        SDL_FreeSurface(surface_letter_s);
+        SDL_DestroyTexture(texture_letter_s);
+    }
+
+    // what to do when user clicks the screen
     void Click_on_cell(int row, int column)
     {
         if (m_game.state == RUNNING_STATE)
@@ -288,8 +343,13 @@ private:
         }
         else if (m_game.state == WON_STATE)
         {
-            std::cout << "Randomizing the board!\n";
-            Randomize_board();
+            std::cout << "The game has been complete!\n";
+            m_game.state = DISPLAY_TIME_SCREEN;
+        }
+        else if (m_game.state == DISPLAY_TIME_SCREEN)
+        {
+            std::cout << "Randomising the board again!\n";
+            m_game.state = RANDOMISE_BOARD;
         }
         else // press reset key
         {
