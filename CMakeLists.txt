@@ -19,7 +19,7 @@ add_executable(Raycaster src/Raycaster/Raycaster.cpp)
 target_link_libraries(Raycaster PRIVATE topt SDL2::SDL2main SDL2::SDL2-static)
 
 add_executable(TicTacToe src/TicTacToe/TicTacToe.cpp)
-target_link_libraries(TicTacToe PRIVATE topt SDL2::SDL2main SDL2::SDL2_gfx SDL2::SDL2-static)
+target_link_libraries(TicTacToe PRIVATE topt SDL2::SDL2main SDL2::SDL2_gfx SDL2::SDL2_ttf SDL2::SDL2-static)
 
 add_executable(15 src/15/15.cpp)
 target_link_libraries(15 PRIVATE topt SDL2::SDL2main SDL2::SDL2_ttf SDL2::SDL2-static)
