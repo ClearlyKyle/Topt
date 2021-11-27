@@ -248,6 +248,10 @@ namespace Topt
         {
             SDL_RenderDrawLine(m_Renderer, x1, y1, x2, y2);
         }
+        void DrawRect(const SDL_Rect *rec)
+        {
+            SDL_RenderDrawRect(m_Renderer, rec);
+        }
 
         void SetPixel(unsigned int x, unsigned int y, const Topt::COLOUR &colour)
         {
